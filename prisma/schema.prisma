@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ ENUMS ============
+
+enum Role {
+  CUSTOMER
+  ORGANISER
+  ADMIN
+}
+
+enum SeatCategory {
+  PREMIUM
+  STANDARD
+  ECONOMY
+}
+
+enum SeatStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+enum WaitlistStatus {
+  WAITING
+  OFFERED
+  EXPIRED
+  CONVERTED
+}
+
+// ============ MODELS ============
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+
+  venues     Venue[]     // organiser's venues
+  shows      Show[]      // organiser's shows
+  bookings   Booking[]
+  waitlists  Waitlist[]
+}
+
+model Venue {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  createdAt DateTime @default(now())
+
+  organiserId String
+  organiser   User   @relation(fields: [organiserId], references: [id])
+
+  seats Seat[]
+  shows Show[]
+}
+
+model Seat {
+  id       String       @id @default(uuid())
+  row      String       // e.g. "A"
+  number   Int          // e.g. 12
+  category SeatCategory
+
+  venueId String
+  venue   Venue  @relation(fields: [venueId], references: [id])
+
+  showSeats ShowSeat[]
+
+  @@unique([venueId, row, number]) // no duplicate physical seats
+}
+
+model Show {
+  id        String   @id @default(uuid())
+  title     String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  venueId String
+  venue   Venue  @relation(fields: [venueId], references: [id])
+
+  organiserId String
+  organiser   User   @relation(fields: [organiserId], references: [id])
+
+  showSeats ShowSeat[]
+  bookings  Booking[]
+  waitlists Waitlist[]
+  prices    ShowPricing[]
+}
+
+model ShowPricing {
+  id       String       @id @default(uuid())
+  category SeatCategory
+  price    Float
+
+  showId String
+  show   Show   @relation(fields: [showId], references: [id])
+
+  @@unique([showId, category])
+}
+
+// This is the KEY table — one row per seat, per show.
+// A seat's status is specific to a SHOW, not global — the same physical
+// seat is "available" for Friday's show and "booked" for Saturday's.
+model ShowSeat {
+  id     String     @id @default(uuid())
+  status SeatStatus @default(AVAILABLE)
+
+  showId String
+  show   Show   @relation(fields: [showId], references: [id])
+
+  seatId String
+  seat   Seat   @relation(fields: [seatId], references: [id])
+
+  hold    SeatHold?
+  booking Booking?
+
+  @@unique([showId, seatId]) // ← THIS is what makes concurrency protection possible
+}
+
+// A temporary lock on a seat while a customer checks out.
+// This table + the unique constraint above is the core of the hold system.
+model SeatHold {
+  id        String   @id @default(uuid())
+  expiresAt DateTime // TTL — when this hold auto-releases
+
+  showSeatId String   @unique // one active hold per show-seat, enforced by DB
+  showSeat   ShowSeat @relation(fields: [showSeatId], references: [id])
+
+  userId String
+  createdAt DateTime @default(now())
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  bookingRef    String        @unique // encoded into the QR code
+  status        BookingStatus @default(CONFIRMED)
+  createdAt     DateTime      @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  showId String
+  show   Show   @relation(fields: [showId], references: [id])
+
+  showSeatId String   @unique
+  showSeat   ShowSeat @relation(fields: [showSeatId], references: [id])
+}
+
+model Waitlist {
+  id       String         @id @default(uuid())
+  status   WaitlistStatus @default(WAITING)
+  category SeatCategory
+  joinedAt DateTime       @default(now())
+
+  offerExpiresAt DateTime? // set only when status = OFFERED
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  showId String
+  show   Show   @relation(fields: [showId], references: [id])
+}
