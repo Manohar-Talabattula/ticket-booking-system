@@ -1,16 +1,18 @@
+import { WaitlistService } from '../waitlist/waitlist.service';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import * as QRCode from 'qrcode';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { EmailService } from './email.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class BookingService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private waitlistService: WaitlistService,
     @InjectQueue('seat-hold-expiry') private holdQueue: Queue,
   ) {}
 
@@ -79,8 +81,11 @@ export class BookingService {
     });
   }
 
-  async cancelBooking(bookingId: string, userId: string) {
-    const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    async cancelBooking(bookingId: string, userId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { showSeat: { include: { seat: true } } },
+    });
     if (!booking || booking.userId !== userId) {
       throw new NotFoundException('Booking not found');
     }
@@ -88,19 +93,25 @@ export class BookingService {
       throw new BadRequestException('Booking already cancelled');
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id: bookingId },
-        data: { status: 'CANCELLED' },
-      });
+    await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: 'CANCELLED' },
+    });
 
-      await tx.showSeat.update({
+    const category = booking.showSeat.seat.category;
+    const offered = await this.waitlistService.offerSeatToNextInLine(
+      booking.showId,
+      category,
+      booking.showSeatId,
+    );
+
+    if (!offered) {
+      await this.prisma.showSeat.update({
         where: { id: booking.showSeatId },
         data: { status: 'AVAILABLE' },
       });
-    });
+    }
 
-    // Waitlist auto-assignment will hook in here later tonight
     return { message: 'Booking cancelled' };
   }
 }

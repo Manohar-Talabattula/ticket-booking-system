@@ -8,6 +8,7 @@ import { VenuesModule } from './venues/venues.module';
 import { ShowsModule } from './shows/shows.module';
 import { SeatHoldModule } from './seat-hold/seat-hold.module';
 import { BookingModule } from './booking/booking.module';
+import { WaitlistModule } from './waitlist/waitlist.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BookingModule } from './booking/booking.module';
     ShowsModule,
     SeatHoldModule,
     BookingModule,
+    WaitlistModule,
   ],
   controllers: [AppController],
   providers: [AppService],
