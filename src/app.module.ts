@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { VenuesModule } from './venues/venues.module';
 import { ShowsModule } from './shows/shows.module';
 import { SeatHoldModule } from './seat-hold/seat-hold.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SeatHoldModule } from './seat-hold/seat-hold.module';
     VenuesModule,
     ShowsModule,
     SeatHoldModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
