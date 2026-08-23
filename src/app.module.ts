@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { VenuesModule } from './venues/venues.module';
 import { ShowsModule } from './shows/shows.module';
+import { SeatHoldModule } from './seat-hold/seat-hold.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ShowsModule } from './shows/shows.module';
     PrismaModule,
     VenuesModule,
     ShowsModule,
+    SeatHoldModule,
   ],
   controllers: [AppController],
   providers: [AppService],
