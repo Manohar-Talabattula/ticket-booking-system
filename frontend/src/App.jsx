@@ -5,6 +5,8 @@ import Register from './pages/Register';
 import EventList from './pages/EventList';
 import EventDetail from './pages/EventDetail';
 import BookingHistory from './pages/BookingHistory';
+import CreateVenue from './pages/CreateVenue';
+import CreateShow from './pages/CreateShow';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -15,6 +17,8 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/admin/venues" element={<ProtectedRoute><CreateVenue /></ProtectedRoute>} />
+      <Route path="/organiser/shows" element={<ProtectedRoute><CreateShow /></ProtectedRoute>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/" element={<EventList />} />

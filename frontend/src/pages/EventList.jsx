@@ -20,9 +20,11 @@ export default function EventList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40 }}>
         <h1 style={{ fontSize: 32, fontWeight: 500, margin: 0 }}>Now Showing</h1>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          {user ? (
+        {user ? (
             <>
               <Link to="/bookings" style={{ fontSize: 14 }}>My Bookings</Link>
+              {user.role === 'ADMIN' && <Link to="/admin/venues" style={{ fontSize: 14 }}>Create Venue</Link>}
+              {user.role === 'ORGANISER' && <Link to="/organiser/shows" style={{ fontSize: 14 }}>Create Show</Link>}
               <span style={{ fontSize: 14, color: '#6b6375' }}>{user.email}</span>
               <button onClick={logout} style={{ fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', color: '#6b6375' }}>
                 Logout
