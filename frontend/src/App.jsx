@@ -1,3 +1,4 @@
+import WaitlistOffer from './pages/WaitlistOffer';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -17,6 +18,7 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/waitlist-offer/:showSeatId" element={<ProtectedRoute><WaitlistOffer /></ProtectedRoute>} />
       <Route path="/admin/venues" element={<ProtectedRoute><CreateVenue /></ProtectedRoute>} />
       <Route path="/organiser/shows" element={<ProtectedRoute><CreateShow /></ProtectedRoute>} />
       <Route path="/login" element={<Login />} />

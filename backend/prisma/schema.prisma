@@ -124,12 +124,11 @@ model ShowSeat {
   seatId String
   seat   Seat   @relation(fields: [seatId], references: [id])
 
-  hold    SeatHold?
-  booking Booking?
+  hold     SeatHold?
+  bookings Booking[]
 
-  @@unique([showId, seatId]) // ← THIS is what makes concurrency protection possible
+  @@unique([showId, seatId])
 }
-
 // A temporary lock on a seat while a customer checks out.
 // This table + the unique constraint above is the core of the hold system.
 model SeatHold {
@@ -145,7 +144,7 @@ model SeatHold {
 
 model Booking {
   id            String        @id @default(uuid())
-  bookingRef    String        @unique // encoded into the QR code
+  bookingRef    String        @unique
   status        BookingStatus @default(CONFIRMED)
   createdAt     DateTime      @default(now())
 
@@ -155,7 +154,7 @@ model Booking {
   showId String
   show   Show   @relation(fields: [showId], references: [id])
 
-  showSeatId String   @unique
+  showSeatId String
   showSeat   ShowSeat @relation(fields: [showSeatId], references: [id])
 }
 

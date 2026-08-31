@@ -15,8 +15,6 @@ export class ShowsService {
       throw new NotFoundException('Venue not found');
     }
 
-    // Create the show, its pricing rows, and a ShowSeat row for every
-    // physical seat in the venue — all in one transaction so it's all-or-nothing.
     return this.prisma.$transaction(async (tx) => {
       const show = await tx.show.create({
         data: {
@@ -66,5 +64,20 @@ export class ShowsService {
       throw new NotFoundException('Show not found');
     }
     return show;
+  }
+
+  async getShowSeatDetails(showSeatId: string) {
+    const showSeat = await this.prisma.showSeat.findUnique({
+      where: { id: showSeatId },
+      include: {
+        show: { include: { venue: true } },
+        seat: true,
+        hold: true,
+      },
+    });
+    if (!showSeat) {
+      throw new NotFoundException('Seat not found');
+    }
+    return showSeat;
   }
 }

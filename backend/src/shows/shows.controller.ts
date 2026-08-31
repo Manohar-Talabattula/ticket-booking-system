@@ -25,4 +25,8 @@ export class ShowsController {
   findOne(@Param('id') id: string) {
     return this.showsService.findOne(id);
   }
+  @Get('seat/:showSeatId')
+  getShowSeat(@Param('showSeatId') showSeatId: string) {
+    return this.showsService.getShowSeatDetails(showSeatId);
+  }
 }
